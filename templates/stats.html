@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Stats :: Der, die, oder das?</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+
+    main {
+      max-width: 30em;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    p {
+      text-align: left;
+    }
+
+    p, .stats {
+      margin: 1em auto;
+    }
+
+
+    a {
+      color: white;
+    }
+
+    table {
+      margin: 1em auto;
+    }
+
+    table td {
+      text-align: right;
+      padding: 0 0.5em;
+    }
+
+    table td:nth-child(1) {
+      text-align: left;
+    }
+
+    thead td {
+      font-weight: 800;
+    }
+
+
+
+  </style>
+</head>
+<body>
+<main>
+  <h1>Stats</h1>
+
+  <p>General stats: {{ total_good }}x good, {{ total_bad }}x bad, total {{ total_good + total_bad }}x,
+    {{ (100 * total_good / (total_good + total_bad)) | int }} %</p>
+
+  <p><a href="/">Practice more</a></p>
+
+  <pre><code>
+{% for cnt, s in stats %}{{ "%3d" | format(loop.index0) }} %: {{ "%-50s" | format(s) }} {{ cnt }}
+{% endfor %}
+    </code></pre>
+
+<table>
+  <thead>
+    <td>Word</td>
+    <td>Good</td>
+    <td>Bad</td>
+    <td>Understand</td>
+  </thead>
+  <tbody>
+{% for word, up, down, chance in words %}
+   <tr>
+     <td>{{ word }}</td>
+     <td>{{ up }}</td>
+     <td>{{ down }}</td>
+     <td>{{ chance|round(0)|int }} %</td>
+   </tr>
+{% endfor %}
+  </tbody>
+</table>
+</main>
+
+
+</body>
+</html>

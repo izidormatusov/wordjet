@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Der, die, oder das?</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: Tahoma, Verdana, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100dvh;
+    }
+
+    main {
+      flex-grow: 1;
+      padding: 0 1em;
+      max-width: 1000px;
+      height: min(100dvh, 900px);
+      display: flex;
+      flex-flow: column;
+      align-items: center;
+      justify-content: center;
+
+    }
+
+    nav {
+      display: flex;
+      margin-left: auto;
+      align-items: right;
+      list-style-type: none;
+    }
+
+    nav a {
+      color: white;
+    }
+
+    #score {
+      min-width: 1em;
+      padding: 1em;
+    }
+
+    #word {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      font-size: 3em;
+    }
+
+    .success {
+      animation: fade-in 0.25s;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 1em;
+      width: 100%
+    }
+
+    .buttons button {
+      flex-grow: 1;
+      border: none;
+      border-radius: 10px;
+      height: 8rem;
+
+      font-size: large;
+    }
+
+    .der {
+      background-color: #aeaddf;
+    }
+
+    .die {
+      background-color: #ffb2a1;
+    }
+
+    .das {
+      background-color: #fff6af;
+    }
+
+
+    .wrong {
+      animation: shake 0.1s;
+      background-color: red !important;
+      cursor: not-allowed;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0, 0); }
+      33% { transform: translate(20px, 0); }
+      66% { transform: translate(-20px, 0); }
+      100% { transform: translate(0, 0); }
+    }
+  </style>
+</head>
+<body>
+
+<main>
+  <nav>
+    <li><a href="/stats">Stats</a></li>
+  </nav>
+  <div id="word"></div>
+  <div id="score"></div>
+  <div class="buttons">
+    <button class="der">der</button>
+    <button class="die">die</button>
+    <button class="das">das</button>
+  </div>
+</main>
+
+<script>
+const wordsURL = '/words';
+const responseURL = '/response';
+const goodURL = '/good';
+
+let words = [];
+let alreadySubmitted = false;
+let goodWords = 0;
+let badWords = 0;
+let wordElement = document.getElementById('word');
+let scoreElement = document.getElementById('score');
+
+function nextWord() {
+  // Request more words ahead of time
+  if (words.length <= 10) {
+    fetch(wordsURL).then(response => response.json().then(data => {
+      console.log('Loaded additional %d words', data.length);
+      for (let word of data) {
+        if (!words.includes(word)) {
+          words.push(word);
+        }
+      }
+    }));
+  }
+
+  if (words.length > 1) {
+    words.shift();
+    alreadySubmitted = false;
+    let word = words[0].split(" ").slice(1).join(' ');
+    wordElement.textContent = word;
+    for (let button of document.getElementsByTagName('button')) {
+      button.classList.remove('wrong');
+    }
+  }
+}
+
+function mark(word, isCorrect) {
+  if (!alreadySubmitted) {
+    alreadySubmitted = true;
+    if (isCorrect) {
+      goodWords++;
+    } else {
+      badWords++;
+    }
+    let percentage = 100 * goodWords / (goodWords + badWords);
+    scoreElement.textContent = `${goodWords}x good, ${badWords}x bad, ${percentage.toFixed(1)}%`;
+
+    fetch(responseURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({"word": word, "correct": isCorrect}),
+    }).catch(error => console.log("Failure marking %s as %s: %s", word, isCorrect ? 'good' : 'bad', error));
+  }
+}
+
+window.addEventListener('load', event => {
+  fetch(wordsURL).then(response => response.json().then(data => {
+    words = data;
+    console.log('Loaded initial %d words', data.length);
+    let word = words[0].split(" ").slice(1).join(' ');
+    wordElement.textContent = word
+  }));
+
+  for (let button of document.getElementsByTagName('button')) {
+    button.addEventListener('click', event => {
+      let answer = event.target.textContent.trim();
+      let word = words[0];
+      if (word.startsWith(answer + ' ')) {
+        mark(word, true);
+        nextWord();
+      } else {
+        mark(word, false);
+        button.classList.add('wrong');
+      }
+    });
+  }
+});
+
+
+
+</script>
+
+</body>
+</html>
